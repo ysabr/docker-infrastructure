@@ -1,0 +1,62 @@
+networks:
+  net:
+    name: net
+    driver: bridge
+
+volumes:
+  mariadbV:
+    driver: local
+    name: mariadbV
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/ysabr/data/mariadb
+  wordpressV:
+    driver: local
+    name: wordpressV
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/ysabr/data/wordpress
+
+services:
+  nginx:
+    container_name: nginx
+    image: nginx
+    build: requirements/nginx
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    volumes:
+      - wordpressV:/var/www/html
+    networks:
+      - net
+    env_file:
+      - ./.env
+    restart: always
+
+  wordpress:
+    container_name: wordpress
+    image: wordpress
+    build: requirements/wordpress
+    depends_on:
+      - mariadb
+    volumes:
+      - wordpressV:/var/www/html
+    networks:
+      - net
+    env_file:
+      - ./.env
+    restart: always
+  mariadb:
+    container_name: mariadb
+    image: mariadb
+    build: requirements/mariadb
+    volumes:
+      - mariadbV:/var/lib/mysql
+    networks:
+      - net
+    env_file:
+      - ./.env
+    restart: always
